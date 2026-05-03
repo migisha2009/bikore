@@ -17,14 +17,14 @@ A full-stack mobile application for digital Ikimina (group savings circles) in R
 - **React Native** with Expo (SDK 51+)
 - **Expo Router** for file-based navigation
 - **TypeScript** for type safety
-- **Fraunces + DM Sans** fonts for premium typography
+- **Fraunces** + **DM Sans** fonts for premium typography
 - **Expo Secure Store** for token storage
 
 ### Backend
 - **Node.js** + Express.js
 - **PostgreSQL** with `pg` driver
 - **JWT** for authentication
-- **bcryptjs** for password hashing
+- **bcrypt** for password hashing
 - **CORS** for cross-origin requests
 
 ## 🚀 Quick Start
@@ -163,8 +163,8 @@ Bikore is designed specifically for the Rwandan market and the traditional Ikimi
 ## 🔒 Security Features
 
 - JWT-based authentication with secure token storage
-- Password hashing with bcryptjs
-- Input validation and sanitization
+- Password hashing with bcrypt
+- **Input validation and sanitization**
 - CORS protection
 - SQL injection prevention with parameterized queries
 
