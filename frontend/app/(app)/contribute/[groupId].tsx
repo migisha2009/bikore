@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
   },
   headerSpacer: {
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   },
   groupName: {
     fontSize: 20,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 4,
   },
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   },
   methodTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 16,
   },
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   },
   methodName: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 2,
   },
@@ -440,7 +440,7 @@ const styles = StyleSheet.create({
   },
   paymentInfoTitle: {
     fontSize: 14,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     marginBottom: 8,
   },

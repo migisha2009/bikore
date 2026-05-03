@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   },
   inviteCode: {
     fontSize: 14,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     letterSpacing: 1,
   },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 12,
   },
@@ -491,12 +491,12 @@ const styles = StyleSheet.create({
   },
   cycleTitle: {
     fontSize: 18,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
   },
   cycleAmount: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.mustard,
   },
   contributionsList: {
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
   },
   contributionsTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 12,
   },
@@ -578,7 +578,7 @@ const styles = StyleSheet.create({
   },
   historyTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 4,
   },
@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 2,
   },
@@ -669,6 +669,6 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: colors.white,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
   },
 });

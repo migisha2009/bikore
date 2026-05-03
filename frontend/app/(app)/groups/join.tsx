@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
   },
   inviteInput: {
     fontSize: 20,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     letterSpacing: 2,
     marginBottom: 12,
   },
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   },
   demoCodeText: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     letterSpacing: 1,
   },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
   },
   previewName: {
     fontSize: 20,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 4,
   },
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     marginBottom: 4,
   },
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   },
   confirmationTitle: {
     fontSize: 14,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     marginBottom: 8,
   },

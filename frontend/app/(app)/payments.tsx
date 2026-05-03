@@ -1,5 +1,4 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../utils/colors';
 
 export default function PaymentsScreen() {
   return (
@@ -12,8 +11,8 @@ export default function PaymentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center' },
+  container: { flex: 1, backgroundColor: '#F5F0E8', alignItems: 'center', justifyContent: 'center' },
   emoji: { fontSize: 64, marginBottom: 16 },
-  title: { fontSize: 28, fontFamily: 'Fraunces_700Bold', color: colors.forestGreen, marginBottom: 8 },
-  sub: { fontSize: 15, fontFamily: 'DMSans_400Regular', color: colors.textMid, textAlign: 'center', paddingHorizontal: 40 },
+  title: { fontSize: 28, fontFamily: 'Fraunces_700Bold', color: '#2C4A2E', marginBottom: 8 },
+  sub: { fontSize: 15, fontFamily: 'DMSans_400Regular', color: '#2C4A2E', textAlign: 'center', paddingHorizontal: 40 },
 });

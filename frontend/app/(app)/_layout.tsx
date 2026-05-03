@@ -1,5 +1,4 @@
 import { Tabs } from 'expo-router';
-import { colors } from '../../utils/colors';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 
 function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
@@ -18,9 +17,9 @@ export default function AppLayout() {
         headerShown: false,
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: colors.forestGreen,
+          backgroundColor: '#2C4A2E',
           borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 90 : 80,
+          height: Platform.OS === 'ios' ? 90 : 75,
           paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           paddingTop: 8,
           elevation: 20,
@@ -40,7 +39,7 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="groups/index"
+        name="groups"
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="👥" label="Groups" focused={focused} />
@@ -61,6 +60,12 @@ export default function AppLayout() {
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="👤" label="Profile" focused={focused} />
           ),
+        }}
+      />
+      <Tabs.Screen
+        name="contribute"
+        options={{
+          href: null,
         }}
       />
     </Tabs>

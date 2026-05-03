@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   },
   emojiLabel: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 12,
   },
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
   },
   cycleLabel: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 12,
   },
@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     marginBottom: 8,
   },
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
   },
   summaryTotal: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
   },
   reviewCard: {
@@ -442,7 +442,7 @@ const styles = StyleSheet.create({
   },
   reviewName: {
     fontSize: 20,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
   },
   reviewDetails: {
@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
   },
   warningTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     marginBottom: 8,
   },
