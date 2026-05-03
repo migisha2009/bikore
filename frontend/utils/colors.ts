@@ -1,0 +1,17 @@
+export const colors = {
+  cream:       '#F5F0E8',
+  beige:       '#EDE8DC',
+  beigeDeep:   '#E0D9CC',
+  forestGreen: '#2C4A2E',
+  darkGreen:   '#1A3320',
+  leafGreen:   '#3D6B40',
+  mintGreen:   '#A8C5A0',
+  mustard:     '#C9922A',
+  mustardLight:'#F0C96A',
+  textDark:    '#1C2B1E',
+  textMid:     '#4A5C4C',
+  textLight:   '#8A9B8C',
+  success:     '#2D9B4E',
+  error:       '#C0392B',
+  white:       '#FFFFFF',
+};
