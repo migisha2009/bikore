@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import {
+  View, Text, StyleSheet, ScrollView,
+  TouchableOpacity, Alert, Linking
+} from 'react-native';
+import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { Button } from '../../components/ui/Button';
 import { colors } from '../../utils/colors';
 import { formatRwf, initials } from '../../utils/format';
 import api from '../../utils/api';
-import { router } from 'expo-router';
 
 interface ProfileStats {
   groupsJoined: number;
@@ -26,11 +28,10 @@ export default function ProfileScreen() {
     try {
       const { data } = await api.get('/contributions/my-summary');
       const groupsData = await api.get('/groups');
-      
       setStats({
         groupsJoined: groupsData.data.length,
         totalContributed: data.totalContributed,
-        totalReceived: 0, // This would be calculated from payouts in a real implementation
+        totalReceived: 0,
       });
     } catch (error) {
       console.error('Error fetching profile stats:', error);
@@ -63,16 +64,18 @@ export default function ProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ color: colors.forestGreen, fontSize: 16 }}>Loading...</Text>
       </View>
     );
   }
 
-  const userInitials = user?.name ? initials(user.name) : 'U';
+  const userInitials = user?.name ? initials(user.name) : 'BK';
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+      {/* Header */}
       <View style={styles.header}>
         <View style={[styles.avatar, { backgroundColor: user?.avatar_color || colors.forestGreen }]}>
           <Text style={styles.avatarText}>{userInitials}</Text>
@@ -84,6 +87,7 @@ export default function ProfileScreen() {
         </Text>
       </View>
 
+      {/* Stats */}
       {stats && (
         <View style={styles.statsSection}>
           <Text style={styles.sectionTitle}>Your Impact</Text>
@@ -94,62 +98,66 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{formatRwf(stats.totalContributed)}</Text>
-              <Text style={styles.statLabel}>Total Contributed</Text>
+              <Text style={styles.statLabel}>Contributed</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{formatRwf(stats.totalReceived)}</Text>
-              <Text style={styles.statLabel}>Total Received</Text>
+              <Text style={styles.statLabel}>Received</Text>
             </View>
           </View>
         </View>
       )}
 
-      <View style={styles.settingsSection}>
+      {/* Settings */}
+      <View style={styles.section}>
         <Text style={styles.sectionTitle}>Settings</Text>
-        
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingTitle}>Notifications</Text>
-            <Text style={styles.settingDescription}>
-              Get reminders for contributions and payouts
-            </Text>
+
+        <View style={styles.card}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>🔔 Notifications</Text>
+              <Text style={styles.settingDesc}>Reminders for contributions</Text>
+            </View>
+            <View style={styles.toggle}>
+              <View style={styles.toggleThumbActive} />
+            </View>
           </View>
-          <TouchableOpacity style={styles.toggle}>
-            <View style={[styles.toggleThumb, styles.toggleThumbActive]} />
+
+          <View style={styles.divider} />
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>🌐 Language</Text>
+              <Text style={styles.settingDesc}>English</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <TouchableOpacity style={styles.settingRow} onPress={handleContactSupport}>
+            <View style={styles.settingInfo}>
+              <Text style={styles.settingTitle}>💬 Contact Support</Text>
+              <Text style={styles.settingDesc}>Chat via WhatsApp</Text>
+            </View>
+            <Text style={styles.chevron}>›</Text>
           </TouchableOpacity>
         </View>
+      </View>
 
-        <View style={styles.settingItem}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingTitle}>Language</Text>
-            <Text style={styles.settingDescription}>English</Text>
-          </View>
-          <TouchableOpacity style={styles.chevron}>
-            <Text style={styles.chevronText}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.settingItem} onPress={handleContactSupport}>
-          <View style={styles.settingInfo}>
-            <Text style={styles.settingTitle}>Contact Support</Text>
-            <Text style={styles.settingDescription}>Get help via WhatsApp</Text>
-          </View>
-          <TouchableOpacity style={styles.chevron}>
-            <Text style={styles.chevronText}>›</Text>
-          </TouchableOpacity>
+      {/* Logout */}
+      <View style={styles.section}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.actionsSection}>
-        <Button onPress={handleLogout} style={styles.logoutButton}>
-          Logout
-        </Button>
-      </View>
-
+      {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>Bikore v1.0.0</Text>
         <Text style={styles.footerSubtext}>Save Together, Grow Together 🇷🇼</Text>
       </View>
+
     </ScrollView>
   );
 }
@@ -162,13 +170,13 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     padding: 24,
-    paddingTop: 40,
-    marginBottom: 24,
+    paddingTop: 60,
+    marginBottom: 8,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -176,7 +184,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 32,
     fontFamily: 'Fraunces_700Bold',
-    color: colors.white,
+    color: '#F5F0E8',
   },
   userName: {
     fontSize: 24,
@@ -191,13 +199,17 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   memberSince: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'DMSans_400Regular',
     color: colors.textLight,
   },
   statsSection: {
     paddingHorizontal: 24,
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  section: {
+    paddingHorizontal: 24,
+    marginBottom: 24,
   },
   sectionTitle: {
     fontSize: 20,
@@ -207,100 +219,95 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   statCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.beige,
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.beigeDeep,
   },
   statValue: {
-    fontSize: 20,
-    fontFamily: 'DMSans_700Bold',
+    fontSize: 18,
+    fontFamily: 'Fraunces_700Bold',
     color: colors.forestGreen,
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'DMSans_400Regular',
     color: colors.textMid,
     textAlign: 'center',
   },
-  settingsSection: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
+  card: {
+    backgroundColor: colors.beige,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: colors.beigeDeep,
   },
-  settingItem: {
+  settingRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: colors.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 14,
   },
   settingInfo: {
     flex: 1,
   },
   settingTitle: {
-    fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 15,
+    fontFamily: 'DMSans_500Medium',
     color: colors.textDark,
     marginBottom: 2,
   },
-  settingDescription: {
-    fontSize: 14,
+  settingDesc: {
+    fontSize: 13,
     fontFamily: 'DMSans_400Regular',
-    color: colors.textMid,
+    color: colors.textLight,
   },
-  toggle: {
-    width: 48,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.beige,
-    padding: 2,
-  },
-  toggleThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  divider: {
+    height: 1,
     backgroundColor: colors.beigeDeep,
   },
-  toggleThumbActive: {
+  toggle: {
+    width: 46,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: colors.forestGreen,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  toggleThumbActive: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#F5F0E8',
     alignSelf: 'flex-end',
   },
   chevron: {
-    padding: 4,
-  },
-  chevronText: {
-    fontSize: 20,
+    fontSize: 22,
     color: colors.textLight,
-    fontFamily: 'DMSans_400Regular',
   },
-  actionsSection: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
+  logoutBtn: {
+    backgroundColor: '#C0392B',
+    borderRadius: 12,
+    padding: 18,
+    alignItems: 'center',
   },
-  logoutButton: {
-    backgroundColor: colors.error,
+  logoutText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'DMSans_700Bold',
   },
   footer: {
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 48,
+    paddingTop: 8,
   },
   footerText: {
     fontSize: 12,

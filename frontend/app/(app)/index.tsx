@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
-import { Button } from '../../components/ui/Button';
 import { colors } from '../../utils/colors';
 import { formatRwf } from '../../utils/format';
 import api from '../../utils/api';
@@ -25,7 +24,7 @@ interface Group {
 }
 
 export default function DashboardScreen() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,7 +37,7 @@ export default function DashboardScreen() {
     try {
       const [summaryRes, groupsRes] = await Promise.all([
         api.get('/contributions/my-summary'),
-        api.get('/groups')
+        api.get('/groups'),
       ]);
       setSummary(summaryRes.data);
       setGroups(groupsRes.data);
@@ -49,25 +48,10 @@ export default function DashboardScreen() {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: logout,
-        },
-      ]
-    );
-  };
-
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text>Loading...</Text>
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <Text style={{ color: colors.forestGreen, fontSize: 16 }}>Loading...</Text>
       </View>
     );
   }
@@ -76,30 +60,28 @@ export default function DashboardScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <View>
-            <Text style={styles.greeting}>Muraho, {firstName} 👋</Text>
-            <Text style={styles.subtitle}>Welcome back to your savings journey</Text>
-          </View>
-          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.greeting}>Muraho, {firstName} 👋</Text>
+        <Text style={styles.subtitle}>Welcome back to your savings journey</Text>
       </View>
 
+      {/* Summary Card */}
       {summary && (
-        <View style={[styles.summaryCard, { backgroundColor: colors.mustardLight }]}>
+        <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>Your Savings Summary</Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>{formatRwf(summary.totalContributed)}</Text>
               <Text style={styles.summaryLabel}>Total Saved</Text>
             </View>
+            <View style={styles.summaryDivider} />
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>{summary.activeGroups}</Text>
               <Text style={styles.summaryLabel}>Active Groups</Text>
             </View>
+            <View style={styles.summaryDivider} />
             <View style={styles.summaryItem}>
               <Text style={styles.summaryValue}>{summary.pendingPayments}</Text>
               <Text style={styles.summaryLabel}>Pending</Text>
@@ -108,29 +90,37 @@ export default function DashboardScreen() {
         </View>
       )}
 
+      {/* Payment Due Alert */}
       {summary && summary.pendingPayments > 0 && (
-        <View style={[styles.alertCard, { borderColor: colors.error }]}>
-          <Text style={styles.alertTitle}>Payment Due</Text>
-          <Text style={styles.alertMessage}>You have {summary.pendingPayments} pending payment(s)</Text>
-          <Button onPress={() => router.push('/groups')} style={styles.alertButton}>
-            Pay Now
-          </Button>
+        <View style={styles.alertCard}>
+          <Text style={styles.alertTitle}>⚠️ Payment Due</Text>
+          <Text style={styles.alertMessage}>
+            You have {summary.pendingPayments} pending payment(s)
+          </Text>
+          <TouchableOpacity
+            style={styles.alertButton}
+            onPress={() => router.push('/(app)/groups')}
+          >
+            <Text style={styles.alertButtonText}>Pay Now</Text>
+          </TouchableOpacity>
         </View>
       )}
 
+      {/* My Groups */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My Groups</Text>
-          <TouchableOpacity onPress={() => router.push('/groups')}>
+          <TouchableOpacity onPress={() => router.push('/(app)/groups')}>
             <Text style={styles.seeAll}>See All</Text>
           </TouchableOpacity>
         </View>
+
         {groups.length > 0 ? (
           groups.slice(0, 3).map((group) => (
             <TouchableOpacity
               key={group.id}
               style={styles.groupCard}
-              onPress={() => router.push(`/groups/${group.id}`)}
+              onPress={() => router.push(`/(app)/groups/${group.id}`)}
             >
               <View style={styles.groupHeader}>
                 <Text style={styles.groupEmoji}>{group.emoji}</Text>
@@ -141,22 +131,20 @@ export default function DashboardScreen() {
                   </Text>
                 </View>
                 <Text style={styles.groupCycle}>
-                  Cycle {group.current_cycle}/{group.total_cycles}
+                  {group.current_cycle}/{group.total_cycles}
                 </Text>
               </View>
-              <View style={styles.groupProgress}>
-                <View style={styles.progressBar}>
-                  <View 
-                    style={[
-                      styles.progressFill, 
-                      { width: `${(group.current_cycle / group.total_cycles) * 100}%` }
-                    ]} 
-                  />
-                </View>
-                <Text style={styles.progressText}>
-                  {formatRwf(group.total_saved)} saved
-                </Text>
+              <View style={styles.progressBar}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${(group.current_cycle / group.total_cycles) * 100}%` },
+                  ]}
+                />
               </View>
+              <Text style={styles.progressText}>
+                {formatRwf(group.total_saved || 0)} saved
+              </Text>
             </TouchableOpacity>
           ))
         ) : (
@@ -164,32 +152,37 @@ export default function DashboardScreen() {
             <Text style={styles.emptyEmoji}>🌱</Text>
             <Text style={styles.emptyTitle}>No groups yet</Text>
             <Text style={styles.emptyMessage}>Start your first Ikimina today!</Text>
-            <Button onPress={() => router.push('/groups/create')} style={styles.emptyButton}>
-              Create Group
-            </Button>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => router.push('/(app)/groups/create')}
+            >
+              <Text style={styles.emptyButtonText}>Create Group</Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
 
+      {/* Quick Actions */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.actionsGrid}>
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => router.push('/groups/create')}
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push('/(app)/groups/create')}
           >
             <Text style={styles.actionEmoji}>➕</Text>
             <Text style={styles.actionTitle}>Start Ikimina</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.actionCard} 
-            onPress={() => router.push('/groups/join')}
+          <TouchableOpacity
+            style={styles.actionCard}
+            onPress={() => router.push('/(app)/groups/join')}
           >
             <Text style={styles.actionEmoji}>🔗</Text>
             <Text style={styles.actionTitle}>Join Group</Text>
           </TouchableOpacity>
         </View>
       </View>
+
     </ScrollView>
   );
 }
@@ -201,12 +194,8 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
+    paddingTop: 60,
     paddingBottom: 16,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
   },
   greeting: {
     fontSize: 28,
@@ -219,19 +208,12 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     color: colors.textMid,
   },
-  logoutButton: {
-    padding: 8,
-  },
-  logoutText: {
-    fontSize: 14,
-    fontFamily: 'DMSans_500Medium',
-    color: colors.textLight,
-  },
   summaryCard: {
     marginHorizontal: 24,
     padding: 20,
     borderRadius: 16,
     marginBottom: 24,
+    backgroundColor: colors.mustardLight,
   },
   summaryTitle: {
     fontSize: 18,
@@ -242,18 +224,25 @@ const styles = StyleSheet.create({
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    alignItems: 'center',
   },
   summaryItem: {
     alignItems: 'center',
+    flex: 1,
+  },
+  summaryDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: '#C9922A44',
   },
   summaryValue: {
-    fontSize: 24,
-    fontFamily: 'DMSans_600SemiBold',
+    fontSize: 20,
+    fontFamily: 'Fraunces_700Bold',
     color: colors.forestGreen,
     marginBottom: 4,
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: 'DMSans_400Regular',
     color: colors.textMid,
   },
@@ -261,13 +250,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 24,
     padding: 16,
     borderRadius: 12,
-    backgroundColor: colors.white,
+    backgroundColor: '#FFF5F5',
     borderWidth: 1,
+    borderColor: colors.error,
     marginBottom: 24,
   },
   alertTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.error,
     marginBottom: 4,
   },
@@ -279,6 +269,15 @@ const styles = StyleSheet.create({
   },
   alertButton: {
     backgroundColor: colors.error,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  alertButtonText: {
+    color: '#FFFFFF',
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   section: {
     paddingHorizontal: 24,
@@ -301,15 +300,12 @@ const styles = StyleSheet.create({
     color: colors.mustard,
   },
   groupCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.beige,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.beigeDeep,
   },
   groupHeader: {
     flexDirection: 'row',
@@ -325,32 +321,29 @@ const styles = StyleSheet.create({
   },
   groupName: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 2,
   },
   groupDetails: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'DMSans_400Regular',
     color: colors.textMid,
   },
   groupCycle: {
     fontSize: 12,
     fontFamily: 'DMSans_500Medium',
-    color: colors.textLight,
-    backgroundColor: colors.beige,
+    color: colors.forestGreen,
+    backgroundColor: colors.mintGreen,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  groupProgress: {
-    marginTop: 8,
-  },
   progressBar: {
     height: 6,
-    backgroundColor: colors.beige,
+    backgroundColor: colors.beigeDeep,
     borderRadius: 3,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   progressFill: {
     height: '100%',
@@ -365,8 +358,10 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     padding: 32,
-    backgroundColor: colors.white,
+    backgroundColor: colors.beige,
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: colors.beigeDeep,
   },
   emptyEmoji: {
     fontSize: 48,
@@ -374,7 +369,7 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 18,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 8,
   },
@@ -387,22 +382,29 @@ const styles = StyleSheet.create({
   },
   emptyButton: {
     backgroundColor: colors.forestGreen,
+    borderRadius: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  },
+  emptyButtonText: {
+    color: '#F5F0E8',
+    fontFamily: 'DMSans_700Bold',
+    fontSize: 15,
+    fontWeight: 'bold',
   },
   actionsGrid: {
     flexDirection: 'row',
     gap: 12,
+    marginTop: 12,
   },
   actionCard: {
     flex: 1,
-    backgroundColor: colors.white,
+    backgroundColor: colors.beige,
     borderRadius: 12,
     padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.beigeDeep,
   },
   actionEmoji: {
     fontSize: 32,
