@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Animated, useEffect, useRef } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { colors } from '../utils/colors';
