@@ -182,6 +182,13 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
       </View>
+      {/* Floating Action Button */}
+<TouchableOpacity
+  style={styles.fab}
+  onPress={() => router.push('/(app)/groups/create')}
+>
+  <Text style={styles.fabText}>＋</Text>
+</TouchableOpacity>
 
     </ScrollView>
   );
@@ -416,4 +423,26 @@ const styles = StyleSheet.create({
     color: colors.textDark,
     textAlign: 'center',
   },
+  fab: {
+  position: 'absolute',
+  bottom: 24,
+  right: 24,
+  width: 58,
+  height: 58,
+  borderRadius: 29,
+  backgroundColor: '#C9922A',
+  alignItems: 'center',
+  justifyContent: 'center',
+  elevation: 10,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.3,
+  shadowRadius: 8,
+},
+fabText: {
+  fontSize: 32,
+  color: '#F5F0E8',
+  fontWeight: 'bold',
+  lineHeight: 36,
+},
 });
