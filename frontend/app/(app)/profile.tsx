@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { colors } from '../../utils/colors';
 import { formatRwf, initials } from '../../utils/format';
 import api from '../../utils/api';
+import { router } from 'expo-router';
 
 interface ProfileStats {
   groupsJoined: number;
@@ -47,7 +48,10 @@ export default function ProfileScreen() {
         {
           text: 'Logout',
           style: 'destructive',
-          onPress: logout,
+          onPress: async () => {
+            await logout();
+            router.replace('/(auth)/login');
+          },
         },
       ]
     );
@@ -219,7 +223,7 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
     marginBottom: 4,
   },
