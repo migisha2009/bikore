@@ -1,10 +1,17 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 
-function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
+function TabIcon({ emoji, label, focused, badge }: { emoji: string; label: string; focused: boolean; badge?: number }) {
   return (
     <View style={[styles.tabItem, focused && styles.tabItemActive]}>
-      <Text style={styles.tabEmoji}>{emoji}</Text>
+      <View style={styles.iconContainer}>
+        <Text style={styles.tabEmoji}>{emoji}</Text>
+        {badge && badge > 0 && (
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
+          </View>
+        )}
+      </View>
       <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
     </View>
   );
@@ -38,6 +45,14 @@ export default function AppLayout() {
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="👥" label="Groups" focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="🔔" label="Alerts" focused={focused} badge={2} />
           ),
         }}
       />
@@ -79,9 +94,32 @@ const styles = StyleSheet.create({
   tabItemActive: {
     backgroundColor: 'rgba(245, 240, 232, 0.15)',
   },
+  iconContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tabEmoji: {
     fontSize: 22,
     marginBottom: 3,
+  },
+  badge: {
+    position: 'absolute',
+    top: -6,
+    right: -8,
+    backgroundColor: '#FF3B30',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontFamily: 'DMSans_500Medium',
+    textAlign: 'center',
   },
   tabLabel: {
     fontSize: 11,
