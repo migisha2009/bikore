@@ -22,11 +22,6 @@ export default function AppLayout() {
           height: Platform.OS === 'ios' ? 90 : 75,
           paddingBottom: Platform.OS === 'ios' ? 20 : 8,
           paddingTop: 8,
-          elevation: 20,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
         },
       }}
     >
@@ -63,7 +58,7 @@ export default function AppLayout() {
         }}
       />
       <Tabs.Screen
-        name="contribute"
+        name="contribute/[groupId]"
         options={{
           href: null,
         }}
