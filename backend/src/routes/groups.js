@@ -19,6 +19,28 @@ router.get('/', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/groups/search — search group by invite code
+router.get('/search', auth, async (req, res) => {
+  const { code } = req.query;
+  if (!code) return res.status(400).json({ error: 'Invite code required' });
+  
+  try {
+    const { rows } = await pool.query(`
+      SELECT g.*, 
+        (SELECT COUNT(*) FROM members WHERE group_id=g.id AND status='active') AS member_count,
+        (SELECT COUNT(*) FROM cycles WHERE group_id=g.id AND status='completed') AS current_cycle
+      FROM groups g 
+      WHERE g.invite_code=$1
+    `, [code]);
+    
+    if (!rows.length) return res.status(404).json({ error: 'Group not found' });
+    
+    res.json(rows[0]);
+  } catch (err) { 
+    res.status(500).json({ error: err.message }); 
+  }
+});
+
 // GET /api/groups/:id — full group detail
 router.get('/:id', auth, async (req, res) => {
   try {

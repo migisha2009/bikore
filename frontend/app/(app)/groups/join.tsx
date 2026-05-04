@@ -40,12 +40,8 @@ export default function JoinGroupScreen() {
 
     setLoading(true);
     try {
-      const { data } = await api.get(`/groups?search=${inviteCode}`);
-      if (data.length === 0) {
-        Alert.alert('Not Found', 'No group found with this invite code');
-        return;
-      }
-      setGroupPreview(data[0]);
+      const { data } = await api.get(`/groups/search?code=${inviteCode}`);
+      setGroupPreview(data);
       setStep('preview');
     } catch (error: any) {
       Alert.alert('Error', error.response?.data?.error || 'Failed to find group');
