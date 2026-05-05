@@ -15,4 +15,34 @@ router.put('/profile', auth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// GET /api/users/trust-score/:userId — get user's trust score
+router.get('/trust-score/:userId', auth, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Only allow users to get their own score or admins
+    if (req.user.id !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    const { rows } = await pool.query(
+      'SELECT trust_score FROM users WHERE id = $1',
+      [userId]
+    );
+    
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({
+      trustScore: rows[0].trust_score || 100
+    });
+  } catch (error) {
+    console.error('Error getting trust score:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+module.exports = router;
+
 module.exports = router;

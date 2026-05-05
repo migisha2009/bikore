@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Linking } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, TextInput, FlatList } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../context/AuthContext';
 import { Button } from '../../../components/ui/Button';
+import CycleTimeline from '../../../components/CycleTimeline';
 import { colors } from '../../../utils/colors';
 import { formatRwf, initials } from '../../../utils/format';
 import api from '../../../utils/api';
@@ -15,6 +16,7 @@ interface Member {
   avatar_color: string;
   position: number;
   status: string;
+  trust_score?: number;
 }
 
 interface Cycle {
@@ -35,6 +37,17 @@ interface Contribution {
   user_id: string;
   user_name: string;
   user_avatar_color: string;
+}
+
+interface ChatMessage {
+  id: string;
+  group_id: string;
+  user_id: string;
+  name: string;
+  message: string;
+  created_at: string;
+  avatar_color: string;
+  type?: string;
 }
 
 interface GroupDetail {
@@ -59,22 +72,93 @@ interface GroupDetail {
   total_saved: number;
 }
 
+interface CycleData {
+  id: string;
+  cycleNumber: number;
+  contributionAmount: number;
+  startDate: string;
+  endDate: string;
+  status: string;
+  payoutUserId: string | null;
+  payoutRecipientName: string | null;
+  payoutRecipientColor: string | null;
+  paidCount: number;
+  totalMembers: number;
+  isComplete: boolean;
+}
+
 export default function GroupDetailScreen() {
   const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [group, setGroup] = useState<GroupDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'this-cycle' | 'history' | 'members'>('this-cycle');
+  const [activeTab, setActiveTab] = useState<'cycle' | 'members' | 'chat' | 'admin' | 'timeline'>('cycle');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [allMembersPaid, setAllMembersPaid] = useState(false);
+  const [cycles, setCycles] = useState<CycleData[]>([]);
+  const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
     fetchGroupDetail();
   }, [id]);
 
+  useEffect(() => {
+    if (group && activeTab === 'chat') {
+      fetchChatMessages();
+    }
+  }, [group, activeTab]);
+
+  // 5-second polling for new messages
+  useEffect(() => {
+    if (!group || activeTab !== 'chat') return;
+
+    const interval = setInterval(async () => {
+      try {
+        const { data } = await api.get(`/groups/${id}/messages`);
+        if (data.length > chatMessages.length) {
+          setChatMessages(data);
+        }
+      } catch (error) {
+        console.error('Error polling messages:', error);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [group, activeTab, id, chatMessages.length]);
+
+  useEffect(() => {
+    if (group?.isAdmin) {
+      fetchPendingRequestsCount();
+    }
+    
+    // Check if all members have paid in current cycle
+    if (group?.activeCycle) {
+      const checkAllPaid = async () => {
+        try {
+          const { data } = await api.get(`/groups/${id}/members`);
+          const allPaid = data.every((member: any) => member.status === 'paid');
+          setAllMembersPaid(allPaid);
+        } catch (error) {
+          console.error('Error checking member payment status:', error);
+        }
+      };
+      
+      checkAllPaid();
+    }
+  }, [group, id]);
+
   const fetchGroupDetail = async () => {
     try {
       const { data } = await api.get(`/groups/${id}`);
       setGroup(data);
+      
+      // Fetch cycles data
+      const cyclesResponse = await api.get(`/groups/${id}/cycles`);
+      setCycles(cyclesResponse.data || []);
     } catch (error: any) {
+      console.error('Error fetching group detail:', error);
       Alert.alert('Error', error.response?.data?.error || 'Failed to load group');
       router.back();
     } finally {
@@ -111,6 +195,66 @@ export default function GroupDetailScreen() {
         ]
       );
     }
+  };
+
+  const fetchChatMessages = async () => {
+    try {
+      const { data } = await api.get(`/groups/${id}/messages`);
+      setChatMessages(data);
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+    }
+  };
+
+  const fetchPendingRequestsCount = async () => {
+    if (!group) return;
+    
+    try {
+      const { data } = await api.get(`/groups/${group.id}/requests`);
+      setPendingRequestsCount(data.length);
+    } catch (error) {
+      console.error('Error fetching pending requests:', error);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !group) return;
+
+    try {
+      const { data } = await api.post(`/groups/${group.id}/chat`, {
+        message: newMessage.trim()
+      });
+      
+      setChatMessages(prev => [...prev, data]);
+      setNewMessage('');
+    } catch (error: any) {
+      Alert.alert('Error', error.response?.data?.error || 'Failed to send message');
+    }
+  };
+
+  const handleRegenerateInviteCode = async () => {
+    if (!group) return;
+
+    Alert.alert(
+      'Regenerate Invite Code',
+      'This will create a new invite code and the old one will expire. Continue?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Regenerate',
+          style: 'default',
+          onPress: async () => {
+            try {
+              const { data } = await api.post(`/groups/${group.id}/regenerate-invite`);
+              Alert.alert('Success', `New invite code: ${data.inviteCode}`);
+              fetchGroupDetail(); // Refresh group data
+            } catch (error: any) {
+              Alert.alert('Error', error.response?.data?.error || 'Failed to regenerate code');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const renderMemberAvatar = (member: Member, size: number = 32) => (
@@ -160,7 +304,7 @@ export default function GroupDetailScreen() {
     );
   };
 
-  const renderThisCycleTab = () => {
+  const renderCycleTab = () => {
     if (!group?.activeCycle) return null;
 
     return (
@@ -177,8 +321,6 @@ export default function GroupDetailScreen() {
         <View style={styles.contributionsList}>
           <Text style={styles.contributionsTitle}>Contributions</Text>
           {group.members.map((member) => {
-            const contribution = group.activeCycle && 
-              group.members.find(m => m.id === member.id);
             const isPaid = member.id === group.myContribution?.user_id && group.myContribution?.status === 'paid';
             
             return (
@@ -253,6 +395,182 @@ export default function GroupDetailScreen() {
     );
   };
 
+  const renderChatTab = () => {
+    const isOwnMessage = (userId: string) => userId === user?.id;
+    
+    return (
+      <View style={styles.chatContainer}>
+        <FlatList
+          data={chatMessages}
+          renderItem={({ item }) => (
+            <View style={[
+              styles.messageItem,
+              isOwnMessage(item.user_id) ? styles.ownMessage : styles.otherMessage
+            ]}>
+              {!isOwnMessage(item.user_id) && (
+                <View style={styles.messageAvatar}>
+                  {renderMemberAvatar({
+                    id: item.user_id,
+                    name: item.name,
+                    phone: '',
+                    avatar_color: item.avatar_color,
+                    position: 0,
+                    status: ''
+                  }, 32)}
+                </View>
+              )}
+              <View style={[
+                styles.messageBubble,
+                isOwnMessage(item.user_id) ? styles.ownBubble : styles.otherBubble
+              ]}>
+                <Text style={[
+                  styles.messageName,
+                  isOwnMessage(item.user_id) && styles.ownMessageName
+                ]}>
+                  {item.type === 'system' ? '🔔' : item.name}
+                </Text>
+                <Text style={[
+                  styles.messageText,
+                  isOwnMessage(item.user_id) && styles.ownMessageText
+                ]}>
+                  {item.message}
+                </Text>
+                <Text style={[
+                  styles.messageTime,
+                  isOwnMessage(item.user_id) && styles.ownMessageTime
+                ]}>
+                  {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </Text>
+              </View>
+              {isOwnMessage(item.user_id) && (
+                <View style={styles.messageAvatar}>
+                  {renderMemberAvatar({
+                    id: item.user_id,
+                    name: item.name,
+                    phone: '',
+                    avatar_color: item.avatar_color,
+                    position: 0,
+                    status: ''
+                  }, 32)}
+                </View>
+              )}
+            </View>
+          )}
+          keyExtractor={(item) => item.id}
+          style={styles.messagesList}
+          showsVerticalScrollIndicator={false}
+          inverted
+          onContentSizeChange={() => {
+            // Auto scroll to latest message
+            if (flatListRef.current) {
+              flatListRef.current.scrollToEnd({ animated: true });
+            }
+          }}
+        />
+        
+        <View style={styles.messageInputContainer}>
+          <TextInput
+            style={styles.messageInput}
+            value={newMessage}
+            onChangeText={setNewMessage}
+            placeholder="Type a message..."
+            multiline
+            maxLength={500}
+          />
+          <TouchableOpacity
+            style={[styles.sendButton, !newMessage.trim() && styles.sendButtonDisabled]}
+            onPress={handleSendMessage}
+            disabled={!newMessage.trim()}
+          >
+            <MaterialCommunityIcons name="send" size={20} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const renderAdminTab = () => {
+    if (!group?.isAdmin) return null;
+
+    return (
+      <View style={styles.tabContent}>
+        <View style={styles.adminSection}>
+          <Text style={styles.adminSectionTitle}>Pending Requests</Text>
+          <TouchableOpacity
+            style={styles.adminActionCard}
+            onPress={() => router.push('/groups/requests')}
+          >
+            <View style={styles.adminActionContent}>
+              <MaterialCommunityIcons name="account-group" size={24} color={colors.forestGreen} />
+              <View style={styles.adminActionInfo}>
+                <Text style={styles.adminActionTitle}>Member Requests</Text>
+                <Text style={styles.adminActionSubtitle}>
+                  {pendingRequestsCount} pending request{pendingRequestsCount !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMid} />
+            </View>
+            {pendingRequestsCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pendingRequestsCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.adminSection}>
+          <Text style={styles.adminSectionTitle}>Group Management</Text>
+          
+          <TouchableOpacity
+            style={styles.adminActionCard}
+            onPress={handleRegenerateInviteCode}
+          >
+            <View style={styles.adminActionContent}>
+              <MaterialCommunityIcons name="refresh" size={24} color={colors.mustard} />
+              <View style={styles.adminActionInfo}>
+                <Text style={styles.adminActionTitle}>Regenerate Invite Code</Text>
+                <Text style={styles.adminActionSubtitle}>Create new invite code</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMid} />
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.adminActionCard}
+            onPress={() => Alert.alert('Edit Rules', 'Feature coming soon!')}
+          >
+            <View style={styles.adminActionContent}>
+              <MaterialCommunityIcons name="file-document-edit" size={24} color={colors.forestGreen} />
+              <View style={styles.adminActionInfo}>
+                <Text style={styles.adminActionTitle}>Edit Group Rules</Text>
+                <Text style={styles.adminActionSubtitle}>Update group settings</Text>
+              </View>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMid} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.adminSection}>
+          <Text style={styles.adminSectionTitle}>Group Stats</Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{group.member_count}</Text>
+              <Text style={styles.statLabel}>Members</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{formatRwf(group.total_saved || 0)}</Text>
+              <Text style={styles.statLabel}>Total Saved</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statValue}>{group.current_cycle}/{group.total_cycles}</Text>
+              <Text style={styles.statLabel}>Current Cycle</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderMembersTab = () => {
     if (!group) return null;
 
@@ -261,18 +579,32 @@ export default function GroupDetailScreen() {
         {group.members.map((member) => (
           <View key={member.id} style={styles.memberItem}>
             <View style={styles.memberInfo}>
-              {renderMemberAvatar(member)}
+              <View style={[styles.avatar, { backgroundColor: member.avatar_color }]}>
+                <Text style={styles.avatarText}>{initials(member.name)}</Text>
+              </View>
               <View style={styles.memberDetails}>
                 <Text style={styles.memberName}>{member.name}</Text>
                 <Text style={styles.memberPhone}>{member.phone}</Text>
                 <Text style={styles.memberPosition}>Position #{member.position}</Text>
+                {member.trust_score !== undefined && (
+                  <View style={styles.trustScoreBadge}>
+                    <Text style={styles.trustScoreText}>{member.trust_score}</Text>
+                    <Text style={styles.trustScoreLabel}>
+                      {member.trust_score >= 90 ? '🟢' : 
+                       member.trust_score >= 70 ? '🟡' : 
+                       member.trust_score >= 50 ? '🟠' : 
+                       '🔴'}
+                    </Text>
+                  </View>
+                )}
+                <Text style={[
+                  styles.memberStatus,
+                  { color: member.status === 'active' ? colors.success : colors.textLight }
+                ]}>
+                  {member.status}
+                </Text>
               </View>
             </View>
-            {member.id === group.admin_id && (
-              <View style={styles.adminBadge}>
-                <Text style={styles.adminBadgeText}>Admin</Text>
-              </View>
-            )}
           </View>
         ))}
       </View>
@@ -313,6 +645,28 @@ export default function GroupDetailScreen() {
           {group.description && (
             <Text style={styles.groupDescription}>{group.description}</Text>
           )}
+          
+          {/* Payout Banner */}
+          {group.isAdmin && allMembersPaid && (
+            <View style={styles.payoutBanner}>
+              <MaterialCommunityIcons name="party-popper" size={24} color={colors.white} />
+              <Text style={styles.payoutBannerText}>🎉 Everyone paid! Confirm Payout</Text>
+              <TouchableOpacity 
+                style={styles.payoutBannerButton}
+                onPress={() => router.push(`/groups/payout?id=${group.id}`)}
+              >
+                <Text style={styles.payoutBannerButtonText}>Process Payout</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          
+          {/* User is next recipient banner */}
+          {!group.isAdmin && group.activeCycle?.payout_user_id === user?.id && (
+            <View style={styles.recipientBanner}>
+              <MaterialCommunityIcons name="gift" size={24} color={colors.white} />
+              <Text style={styles.recipientBannerText}>You are next to receive!</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -320,7 +674,7 @@ export default function GroupDetailScreen() {
 
       <View style={styles.tabsContainer}>
         <View style={styles.tabs}>
-          {(['this-cycle', 'history', 'members'] as const).map((tab) => (
+          {(['cycle', 'members', 'chat', 'admin', 'timeline'] as const).map((tab) => (
             <TouchableOpacity
               key={tab}
               style={[
@@ -333,16 +687,29 @@ export default function GroupDetailScreen() {
                 styles.tabText,
                 activeTab === tab && styles.activeTabText,
               ]}>
-                {tab === 'this-cycle' ? 'This Cycle' : tab === 'history' ? 'History' : 'Members'}
+                {tab === 'cycle' ? 'Cycle' : tab === 'members' ? 'Members' : tab === 'chat' ? 'Chat' : tab === 'admin' ? 'Admin' : 'Timeline'}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <ScrollView style={styles.tabContainer} showsVerticalScrollIndicator={false}>
-          {activeTab === 'this-cycle' && renderThisCycleTab()}
-          {activeTab === 'history' && renderHistoryTab()}
+          {activeTab === 'cycle' && renderCycleTab()}
           {activeTab === 'members' && renderMembersTab()}
+          {activeTab === 'chat' && renderChatTab()}
+          {activeTab === 'admin' && renderAdminTab()}
+          {activeTab === 'timeline' && (
+            <View style={styles.tabContent}>
+              <CycleTimeline 
+                cycles={cycles}
+                currentCycleNumber={group?.current_cycle || 0}
+                onCyclePress={(cycle) => {
+                  // Handle cycle press if needed
+                  console.log('Cycle pressed:', cycle);
+                }}
+              />
+            </View>
+          )}
         </ScrollView>
       </View>
 
@@ -635,22 +1002,6 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   memberPhone: {
-    fontSize: 14,
-    fontFamily: 'DMSans_400Regular',
-    color: colors.textMid,
-    marginBottom: 2,
-  },
-  memberPosition: {
-    fontSize: 12,
-    fontFamily: 'DMSans_400Regular',
-    color: colors.textLight,
-  },
-  adminBadge: {
-    backgroundColor: colors.forestGreen,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
   adminBadgeText: {
     fontSize: 12,
     fontFamily: 'DMSans_500Medium',
@@ -670,5 +1021,227 @@ const styles = StyleSheet.create({
   avatarText: {
     color: colors.white,
     fontFamily: 'DMSans_700Bold',
+  },
+  // Chat styles
+  chatContainer: {
+    flex: 1,
+    backgroundColor: colors.white,
+  },
+  messagesList: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+  },
+  messageItem: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  ownMessage: {
+    justifyContent: 'flex-end',
+  },
+  otherMessage: {
+    justifyContent: 'flex-start',
+  },
+  messageAvatar: {
+    marginRight: 12,
+  },
+  messageBubble: {
+    borderRadius: 12,
+    padding: 12,
+    maxWidth: '70%',
+  },
+  ownBubble: {
+    backgroundColor: colors.forestGreen,
+  },
+  otherBubble: {
+    backgroundColor: colors.beige,
+  },
+  messageName: {
+    fontSize: 12,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.textMid,
+    marginBottom: 4,
+  },
+  ownMessageName: {
+    color: colors.white,
+  },
+  messageText: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textDark,
+    lineHeight: 20,
+  },
+  ownMessageText: {
+    color: colors.white,
+  },
+  messageTime: {
+    fontSize: 10,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textLight,
+    marginTop: 4,
+  },
+  ownMessageTime: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  messageInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 8,
+    backgroundColor: colors.white,
+    borderTopWidth: 1,
+    borderTopColor: colors.beigeDeep,
+  },
+  messageInput: {
+    flex: 1,
+    backgroundColor: colors.beige,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    marginRight: 8,
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textDark,
+    maxHeight: 80,
+  },
+  sendButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.forestGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: colors.textLight,
+  },
+  // Admin styles
+  adminSection: {
+    marginBottom: 24,
+  },
+  adminSectionTitle: {
+    fontSize: 16,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.textDark,
+    marginBottom: 12,
+  },
+  adminActionCard: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: colors.beigeDeep,
+    position: 'relative',
+  },
+  adminActionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  adminActionInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  adminActionTitle: {
+    fontSize: 16,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.textDark,
+    marginBottom: 2,
+  },
+  adminActionSubtitle: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+  },
+  badge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    backgroundColor: colors.mustard,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.white,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: colors.beige,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.forestGreen,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+    textAlign: 'center',
+  },
+  // Payout banner styles
+  payoutBanner: {
+    backgroundColor: colors.mustard,
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  payoutBannerText: {
+    fontSize: 16,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.white,
+    marginRight: 12,
+  },
+  payoutBannerButton: {
+    backgroundColor: colors.white,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  payoutBannerButtonText: {
+    fontSize: 14,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.mustard,
+  },
+  recipientBanner: {
+    backgroundColor: colors.success,
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  recipientBannerText: {
+    fontSize: 16,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.white,
+    marginRight: 12,
   },
 });

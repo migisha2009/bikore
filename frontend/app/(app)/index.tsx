@@ -67,25 +67,52 @@ export default function DashboardScreen() {
 
       {/* Summary Card */}
       {summary && (
-        <View style={styles.summaryCard}>
-          <Text style={styles.summaryTitle}>Your Savings Summary</Text>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>{formatRwf(summary.totalContributed)}</Text>
-              <Text style={styles.summaryLabel}>Total Saved</Text>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Summary Cards */}
+          <View style={styles.summarySection}>
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryValue}>{formatRwf(summary?.totalContributed || 0)}</Text>
+                <Text style={styles.summaryLabel}>Total Contributed</Text>
+              </View>
             </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>{summary.activeGroups}</Text>
-              <Text style={styles.summaryLabel}>Active Groups</Text>
-            </View>
-            <View style={styles.summaryDivider} />
-            <View style={styles.summaryItem}>
-              <Text style={styles.summaryValue}>{summary.pendingPayments}</Text>
-              <Text style={styles.summaryLabel}>Pending</Text>
+
+            <View style={styles.summaryRow}>
+              <View style={[styles.summaryCard, styles.smallCard]}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryValue}>{summary?.activeGroups || 0}</Text>
+                  <Text style={styles.summaryLabel}>Active Groups</Text>
+                </View>
+              </View>
+
+              <View style={[styles.summaryCard, styles.smallCard]}>
+                <View style={styles.summaryItem}>
+                  <Text style={styles.summaryValue}>{summary?.pendingPayments || 0}</Text>
+                  <Text style={styles.summaryLabel}>Pending</Text>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
+
+          {/* Goals Section */}
+          <View style={styles.goalsSection}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Savings Goals</Text>
+              <TouchableOpacity
+                style={styles.seeAllButton}
+                onPress={() => router.push('/goals')}
+              >
+                <Text style={styles.seeAllText}>See All</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={styles.createGoalButton}
+              onPress={() => router.push('/goals')}
+            >
+              <Text style={styles.createGoalText}>Create New Goal</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       )}
 
       {/* Payment Due Alert */}
@@ -194,4 +221,7 @@ const styles = StyleSheet.create({
   emptyMessage: { fontSize: 14, fontFamily: 'DMSans_400Regular', color: colors.textMid, textAlign: 'center', marginBottom: 20 },
   emptyButton: { backgroundColor: colors.forestGreen, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 },
   emptyButtonText: { color: '#F5F0E8', fontFamily: 'DMSans_700Bold', fontSize: 15, fontWeight: 'bold' },
+  goalsSection: {
+    marginBottom: 32,
+  },
 });

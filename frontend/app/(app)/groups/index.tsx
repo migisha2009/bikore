@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useAuth } from '../../../context/AuthContext';
 import { colors } from '../../../utils/colors';
 import { formatRwf } from '../../../utils/format';
 import api from '../../../utils/api';
@@ -15,10 +17,15 @@ interface Group {
   current_cycle: number;
   total_cycles: number;
   position?: number;
+  admin_id?: string;
+  pending_requests_count?: number;
+  user_request_status?: 'pending' | 'approved' | 'rejected' | null;
 }
 
 export default function GroupsScreen() {
+  const { user } = useAuth();
   const [groups, setGroups] = useState<Group[]>([]);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { fetchGroups(); }, []);
@@ -27,6 +34,15 @@ export default function GroupsScreen() {
     try {
       const { data } = await api.get('/groups');
       setGroups(data);
+      
+      // Calculate total pending requests for admin groups
+      const totalPending = data.reduce((sum: number, group: Group) => {
+        if (group.admin_id === user?.id) {
+          return sum + (group.pending_requests_count || 0);
+        }
+        return sum;
+      }, 0);
+      setPendingRequestsCount(totalPending);
     } catch (error) {
       console.error('Error fetching groups:', error);
     } finally {
@@ -46,8 +62,21 @@ export default function GroupsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>My Groups</Text>
-        <Text style={styles.subtitle}>{groups.length} {groups.length === 1 ? 'group' : 'groups'}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.title}>My Groups</Text>
+          <Text style={styles.subtitle}>{groups.length} {groups.length === 1 ? 'group' : 'groups'}</Text>
+        </View>
+        {pendingRequestsCount > 0 && (
+          <TouchableOpacity 
+            style={styles.notificationBadge}
+            onPress={() => router.push('/groups/requests')}
+          >
+            <MaterialCommunityIcons name="bell" size={20} color={colors.white} />
+            <View style={styles.badgeDot}>
+              <Text style={styles.badgeText}>{pendingRequestsCount}</Text>
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
@@ -61,7 +90,14 @@ export default function GroupsScreen() {
               <View style={styles.groupHeader}>
                 <Text style={styles.groupEmoji}>{group.emoji}</Text>
                 <View style={styles.groupInfo}>
-                  <Text style={styles.groupName}>{group.name}</Text>
+                  <View style={styles.groupNameRow}>
+                    <Text style={styles.groupName}>{group.name}</Text>
+                    {group.user_request_status === 'pending' && (
+                      <View style={styles.pendingChip}>
+                        <Text style={styles.pendingChipText}>Pending approval</Text>
+                      </View>
+                    )}
+                  </View>
                   <Text style={styles.groupDetails}>
                     {group.member_count} members • {formatRwf(group.contribution_amount)}
                   </Text>
@@ -109,7 +145,17 @@ export default function GroupsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
-  header: { padding: 24, paddingTop: 60, paddingBottom: 16 },
+  header: { 
+    padding: 24, 
+    paddingTop: 60, 
+    paddingBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  headerLeft: {
+    flex: 1,
+  },
   title: { fontSize: 28, fontFamily: 'Fraunces_700Bold', color: colors.forestGreen, marginBottom: 4 },
   subtitle: { fontSize: 16, fontFamily: 'DMSans_400Regular', color: colors.textMid },
   content: { flex: 1, paddingHorizontal: 24 },
@@ -117,7 +163,25 @@ const styles = StyleSheet.create({
   groupHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   groupEmoji: { fontSize: 32, marginRight: 12 },
   groupInfo: { flex: 1 },
-  groupName: { fontSize: 17, fontFamily: 'DMSans_700Bold', color: colors.textDark, marginBottom: 3 },
+  groupNameRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    marginBottom: 3,
+  },
+  groupName: { fontSize: 17, fontFamily: 'DMSans_700Bold', color: colors.textDark, flex: 1 },
+  pendingChip: {
+    backgroundColor: colors.mustard,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  pendingChipText: {
+    fontSize: 10,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.white,
+  },
   groupDetails: { fontSize: 13, fontFamily: 'DMSans_400Regular', color: colors.textMid, marginBottom: 3 },
   position: { fontSize: 12, fontFamily: 'DMSans_500Medium', color: colors.mustard },
   cycleBox: { alignItems: 'center' },
@@ -138,4 +202,30 @@ const styles = StyleSheet.create({
   emptyBtnOutlineText: { color: colors.forestGreen, fontFamily: 'DMSans_700Bold', fontSize: 16, fontWeight: 'bold' },
   fab: { position: 'absolute', right: 24, bottom: 24, width: 58, height: 58, borderRadius: 29, backgroundColor: colors.mustard, alignItems: 'center', justifyContent: 'center', elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   fabText: { fontSize: 32, color: '#F5F0E8', fontWeight: 'bold', lineHeight: 36 },
+  // Notification badge styles
+  notificationBadge: {
+    position: 'relative',
+    backgroundColor: colors.forestGreen,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeDot: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: colors.mustard,
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgeText: {
+    color: colors.white,
+    fontSize: 10,
+    fontFamily: 'DMSans_700Bold',
+  },
 });

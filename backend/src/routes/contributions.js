@@ -2,6 +2,8 @@ const router = require('express').Router();
 const pool = require('../db');
 const auth = require('../middleware/auth');
 const paymentService = require('../services/payment');
+const GoalsService = require('../services/goals');
+const ReferralService = require('../services/referral');
 
 // GET /api/contributions/my-summary
 router.get('/my-summary', auth, async (req, res) => {
@@ -40,7 +42,7 @@ router.get('/', auth, async (req, res) => {
 
 // POST /api/contributions/pay
 router.post('/pay', auth, async (req, res) => {
-  const { groupId, cycleId, method } = req.body;
+  const { groupId, cycleId, method, useCredits = false, creditAmount = 0 } = req.body;
   if (!groupId || !cycleId || !method) return res.status(400).json({ error: 'groupId, cycleId, method required' });
   
   const client = await pool.connect();
@@ -68,6 +70,25 @@ router.post('/pay', auth, async (req, res) => {
     const user = userResult.rows[0];
     const group = groupResult.rows[0];
     const amount = group.contribution_amount;
+    
+    // Handle credit usage
+    let creditUsed = 0;
+    if (useCredits && creditAmount > 0) {
+      // Check available credits
+      const creditBalance = await ReferralService.getCreditsBalance(req.userId);
+      
+      if (creditBalance < creditAmount) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Insufficient credits' });
+      }
+      
+      if (creditAmount > amount) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Credit amount cannot exceed contribution amount' });
+      }
+      
+      creditUsed = creditAmount;
+    }
 
     // Check if already paid
     const existing = await client.query('SELECT * FROM contributions WHERE cycle_id=$1 AND user_id=$2', [cycleId, req.userId]);
@@ -92,13 +113,19 @@ router.post('/pay', auth, async (req, res) => {
       return res.status(400).json({ error: phoneValidation.error });
     }
 
-    // Process mobile money payment
-    const paymentResult = await paymentService.processPayment(
-      user.phone, 
-      amount, 
-      method, 
-      `Contribution to ${group.name} - Cycle ${cycleId}`
-    );
+    // Calculate actual payment amount after credits
+    const paymentAmount = amount - creditUsed;
+    
+    // Process mobile money payment (only if payment amount > 0)
+    let paymentResult = { success: true, transactionId: null };
+    if (paymentAmount > 0) {
+      paymentResult = await paymentService.processPayment(
+        user.phone, 
+        paymentAmount, 
+        method, 
+        `Contribution to ${group.name} - Cycle ${cycleId}`
+      );
+    }
 
     if (!paymentResult.success) {
       await client.query('ROLLBACK');
@@ -112,9 +139,20 @@ router.post('/pay', auth, async (req, res) => {
     );
 
     await client.query('COMMIT');
+    
+    // Use credits if applicable
+    if (creditUsed > 0) {
+      await ReferralService.useCredits(req.userId, creditUsed, rows[0].id);
+    }
+    
+    // Update goal progress after successful payment
+    await GoalsService.updateGoalProgress(req.userId, groupId, amount);
+    
     res.status(201).json({
       ...rows[0],
       transactionId: paymentResult.transactionId,
+      creditUsed,
+      paymentAmount,
       message: 'Payment processed successfully'
     });
 

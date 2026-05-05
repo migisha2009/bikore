@@ -1,5 +1,7 @@
-import { Tabs } from 'expo-router';
+import { useAuth } from '../../../context/AuthContext';
+import { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
+import { Tabs } from 'expo-router';
 
 function TabIcon({ emoji, label, focused, badge }: { emoji: string; label: string; focused: boolean; badge?: number }) {
   return (
@@ -18,6 +20,23 @@ function TabIcon({ emoji, label, focused, badge }: { emoji: string; label: strin
 }
 
 export default function AppLayout() {
+  const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const { data } = await api.get('/notifications?limit=1');
+        setUnreadCount(data.unreadCount || 0);
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+  }, []);
+
   return (
     <Tabs
       screenOptions={{
@@ -52,7 +71,7 @@ export default function AppLayout() {
         name="notifications"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🔔" label="Alerts" focused={focused} badge={2} />
+            <TabIcon emoji="🔔" label="Alerts" focused={focused} badge={unreadCount} />
           ),
         }}
       />
