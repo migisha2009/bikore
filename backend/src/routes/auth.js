@@ -45,8 +45,8 @@ router.post('/login', async (req, res) => {
 });
 
 // GET /api/auth/me
-router.get('/me', require('../middleware/auth'), async (req, res) => {
-  const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [req.userId]);
+router.get('/me', require('../middleware/auth').authenticateToken, async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM users WHERE id=$1', [req.user.id]);
   if (!rows.length) return res.status(404).json({ error: 'User not found' });
   res.json(safe(rows[0]));
 });

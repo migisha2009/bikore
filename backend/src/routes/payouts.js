@@ -220,6 +220,9 @@ router.post('/confirm', authenticateToken, requireAdmin, async (req, res) => {
       console.error('Error confirming payout:', error);
       res.status(500).json({ error: 'Internal server error' });
     }
+  } catch (error) {
+    console.error('Error in payout confirmation:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

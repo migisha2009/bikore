@@ -1,16 +1,16 @@
 const router = require('express').Router();
 const pool = require('../db');
-const auth = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
 const paymentService = require('../services/payment');
 const GoalsService = require('../services/goals');
 const ReferralService = require('../services/referral');
 
 // GET /api/contributions/my-summary
-router.get('/my-summary', auth, async (req, res) => {
+router.get('/my-summary', authenticateToken, async (req, res) => {
   try {
-    const contributed = await pool.query('SELECT COALESCE(SUM(amount),0) AS total FROM contributions WHERE user_id=$1 AND status=$2', [req.userId, 'paid']);
-    const pending = await pool.query(`SELECT COUNT(*) FROM contributions c JOIN cycles cy ON cy.id=c.cycle_id WHERE c.user_id=$1 AND c.status='pending' AND cy.status='active'`, [req.userId]);
-    const groups = await pool.query('SELECT COUNT(*) FROM members WHERE user_id=$1 AND status=$2', [req.userId, 'active']);
+    const contributed = await pool.query('SELECT COALESCE(SUM(amount),0) AS total FROM contributions WHERE user_id=$1 AND status=$2', [req.user.id, 'paid']);
+    const pending = await pool.query(`SELECT COUNT(*) FROM contributions c JOIN cycles cy ON cy.id=c.cycle_id WHERE c.user_id=$1 AND c.status='pending' AND cy.status='active'`, [req.user.id]);
+    const groups = await pool.query('SELECT COUNT(*) FROM members WHERE user_id=$1 AND status=$2', [req.user.id, 'active']);
     res.json({
       totalContributed: parseInt(contributed.rows[0].total),
       pendingPayments: parseInt(pending.rows[0].count),
@@ -20,7 +20,7 @@ router.get('/my-summary', auth, async (req, res) => {
 });
 
 // GET /api/contributions?cycleId=&groupId=
-router.get('/', auth, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
     let query = `
       SELECT c.*, u.name, u.avatar_color, g.name as group_name, cy.cycle_number
@@ -41,7 +41,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // POST /api/contributions/pay
-router.post('/pay', auth, async (req, res) => {
+router.post('/pay', authenticateToken, async (req, res) => {
   const { groupId, cycleId, method, useCredits = false, creditAmount = 0 } = req.body;
   if (!groupId || !cycleId || !method) return res.status(400).json({ error: 'groupId, cycleId, method required' });
   
@@ -50,7 +50,7 @@ router.post('/pay', auth, async (req, res) => {
     await client.query('BEGIN');
     
     // Verify user is a member of the group
-    const member = await client.query('SELECT * FROM members WHERE group_id=$1 AND user_id=$2 AND status=$3', [groupId, req.userId, 'active']);
+    const member = await client.query('SELECT * FROM members WHERE group_id=$1 AND user_id=$2 AND status=$3', [groupId, req.user.id, 'active']);
     if (!member.rows.length) {
       await client.query('ROLLBACK');
       return res.status(403).json({ error: 'Not a member of this group' });
@@ -58,7 +58,7 @@ router.post('/pay', auth, async (req, res) => {
 
     // Get user and group details
     const [userResult, groupResult] = await Promise.all([
-      client.query('SELECT phone FROM users WHERE id=$1', [req.userId]),
+      client.query('SELECT phone FROM users WHERE id=$1', [req.user.id]),
       client.query('SELECT contribution_amount, name FROM groups WHERE id=$1', [groupId])
     ]);
     
@@ -75,7 +75,7 @@ router.post('/pay', auth, async (req, res) => {
     let creditUsed = 0;
     if (useCredits && creditAmount > 0) {
       // Check available credits
-      const creditBalance = await ReferralService.getCreditsBalance(req.userId);
+      const creditBalance = await ReferralService.getCreditsBalance(req.user.id);
       
       if (creditBalance < creditAmount) {
         await client.query('ROLLBACK');
@@ -91,7 +91,7 @@ router.post('/pay', auth, async (req, res) => {
     }
 
     // Check if already paid
-    const existing = await client.query('SELECT * FROM contributions WHERE cycle_id=$1 AND user_id=$2', [cycleId, req.userId]);
+    const existing = await client.query('SELECT * FROM contributions WHERE cycle_id=$1 AND user_id=$2', [cycleId, req.user.id]);
     if (existing.rows.length) {
       if (existing.rows[0].status === 'paid') {
         await client.query('ROLLBACK');
@@ -135,18 +135,18 @@ router.post('/pay', auth, async (req, res) => {
     // Create contribution record
     const { rows } = await client.query(
       'INSERT INTO contributions (cycle_id,group_id,user_id,amount,method,status,paid_at,transaction_id) VALUES ($1,$2,$3,$4,$5,$6,NOW(),$7) RETURNING *',
-      [cycleId, groupId, req.userId, amount, method, 'paid', paymentResult.transactionId]
+      [cycleId, groupId, req.user.id, amount, method, 'paid', paymentResult.transactionId]
     );
 
     await client.query('COMMIT');
     
     // Use credits if applicable
     if (creditUsed > 0) {
-      await ReferralService.useCredits(req.userId, creditUsed, rows[0].id);
+      await ReferralService.useCredits(req.user.id, creditUsed, rows[0].id);
     }
     
     // Update goal progress after successful payment
-    await GoalsService.updateGoalProgress(req.userId, groupId, amount);
+    await GoalsService.updateGoalProgress(req.user.id, groupId, amount);
     
     res.status(201).json({
       ...rows[0],
