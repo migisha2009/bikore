@@ -9,7 +9,13 @@ router.get('/', auth, async (req, res) => {
       SELECT g.*, m.position, m.joined_at,
         (SELECT COUNT(*) FROM members WHERE group_id=g.id AND status='active') AS member_count,
         (SELECT SUM(amount) FROM contributions WHERE group_id=g.id AND status='paid') AS total_saved,
-        (SELECT id FROM cycles WHERE group_id=g.id AND status='active' LIMIT 1) AS active_cycle_id
+        (SELECT json_build_object(
+          'id', c.id,
+          'cycle_number', c.cycle_number,
+          'status', c.status,
+          'start_date', c.start_date,
+          'payout_user_id', c.payout_user_id
+        ) FROM cycles c WHERE c.group_id=g.id AND c.status='active' LIMIT 1) AS "activeCycle"
       FROM groups g
       JOIN members m ON m.group_id=g.id
       WHERE m.user_id=$1 AND m.status='active'

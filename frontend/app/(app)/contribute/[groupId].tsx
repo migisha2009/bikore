@@ -32,6 +32,7 @@ export default function ContributeScreen() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [step, setStep] = useState<'payment' | 'processing' | 'success'>('payment');
+  const [methodSelected, setMethodSelected] = useState(false);
 
   useEffect(() => {
     fetchGroupData();
@@ -58,41 +59,62 @@ export default function ContributeScreen() {
   };
 
   const handlePayment = async () => {
-    if (!group || !activeCycle) return;
+    if (!group || !activeCycle) {
+      console.log('❌ Payment failed: Missing group or cycle data');
+      Alert.alert('Error', 'Unable to process payment - missing group information');
+      return;
+    }
+
+    console.log('🚀 Starting payment process...');
+    console.log('   Group ID:', group.id);
+    console.log('   Cycle ID:', activeCycle.id);
+    console.log('   Method:', selectedMethod === 'momo' ? 'MTN MoMo' : 'Airtel Money');
+    console.log('   Amount:', group.contribution_amount);
 
     setProcessing(true);
     setStep('processing');
 
-    // Simulate payment processing
-    setTimeout(async () => {
-      try {
-        const { data } = await api.post('/contributions/pay', {
-          groupId: group.id,
-          cycleId: activeCycle.id,
-          method: selectedMethod === 'momo' ? 'MTN MoMo' : 'Airtel Money',
-        });
+    try {
+      const payload = {
+        groupId: group.id,
+        cycleId: activeCycle.id,
+        method: selectedMethod === 'momo' ? 'MTN MoMo' : 'Airtel Money',
+      };
 
-        setStep('success');
-        
-        setTimeout(() => {
-          Alert.alert(
-            'Payment Successful!',
-            `Your contribution of ${formatRwf(data.amount)} has been received.`,
-            [
-              {
-                text: 'View Group',
-                onPress: () => router.replace(`/groups/${group.id}`),
-              },
-            ]
-          );
-        }, 2000);
-      } catch (error: any) {
-        setStep('payment');
-        Alert.alert('Payment Failed', error.response?.data?.error || 'Payment could not be processed');
-      } finally {
-        setProcessing(false);
-      }
-    }, 3000);
+      console.log('📤 Sending payment request:', payload);
+
+      const { data } = await api.post('/contributions/pay', payload);
+
+      console.log('✅ Payment successful:', data);
+      setStep('success');
+      
+      setTimeout(() => {
+        Alert.alert(
+          'Payment Successful!',
+          `Your contribution of ${formatRwf(data.amount)} has been received.\nTransaction ID: ${data.transactionId}`,
+          [
+            {
+              text: 'View Group',
+              onPress: () => router.replace(`/groups/${group.id}`),
+            },
+            {
+              text: 'View Payments',
+              onPress: () => router.replace('/payments'),
+            },
+          ]
+        );
+      }, 2000);
+    } catch (error: any) {
+      console.error('❌ Payment failed:', error);
+      console.error('   Error response:', error.response?.data);
+      console.error('   Error status:', error.response?.status);
+      
+      setStep('payment');
+      const errorMessage = error.response?.data?.error || error.message || 'Payment could not be processed';
+      Alert.alert('Payment Failed', errorMessage);
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const renderPaymentStep = () => (
@@ -123,7 +145,10 @@ export default function ContributeScreen() {
             styles.methodOption,
             selectedMethod === 'momo' && styles.methodOptionSelected,
           ]}
-          onPress={() => setSelectedMethod('momo')}
+          onPress={() => {
+              setSelectedMethod('momo');
+              setMethodSelected(true);
+            }}
         >
           <View style={styles.methodInfo}>
             <View style={[styles.methodIcon, { backgroundColor: '#FF6600' }]}>
@@ -149,7 +174,10 @@ export default function ContributeScreen() {
             styles.methodOption,
             selectedMethod === 'airtel' && styles.methodOptionSelected,
           ]}
-          onPress={() => setSelectedMethod('airtel')}
+          onPress={() => {
+              setSelectedMethod('airtel');
+              setMethodSelected(true);
+            }}
         >
           <View style={styles.methodInfo}>
             <View style={[styles.methodIcon, { backgroundColor: '#ED1C24' }]}>
@@ -171,23 +199,46 @@ export default function ContributeScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.paymentInfo}>
-        <Text style={styles.paymentInfoTitle}>Payment Information</Text>
-        <Text style={styles.paymentInfoText}>
-          • Your phone number: {user?.phone}{'\n'}
-          • Payment will be processed immediately{'\n'}
-          • You'll receive a confirmation SMS{'\n'}
-          • This is a demo - no actual charges
-        </Text>
-      </View>
+      {methodSelected && (
+        <View style={styles.confirmationCard}>
+          <Text style={styles.confirmationTitle}>Confirm Payment</Text>
+          <Text style={styles.confirmationAmount}>{formatRwf(group?.contribution_amount || 0)}</Text>
+          <Text style={styles.confirmationMethod}>
+            via {selectedMethod === 'momo' ? 'MTN MoMo' : 'Airtel Money'}
+          </Text>
+          <Text style={styles.confirmationPhone}>
+            to {user?.phone}
+          </Text>
+          
+          <View style={styles.confirmationDivider} />
+          
+          <Text style={styles.confirmationNote}>
+            By confirming, you authorize this payment to be processed immediately.
+          </Text>
+        </View>
+      )}
 
-      <Button
-        onPress={handlePayment}
-        disabled={processing}
-        style={styles.payButton}
-      >
-        Confirm & Pay {formatRwf(group?.contribution_amount || 0)}
-      </Button>
+      {methodSelected && (
+        <Button
+          onPress={handlePayment}
+          disabled={processing}
+          style={styles.payButtonActive}
+        >
+          {processing ? 'Processing...' : `Pay ${formatRwf(group?.contribution_amount || 0)}`}
+        </Button>
+      )}
+
+      {!methodSelected && (
+        <View style={styles.paymentInfo}>
+          <Text style={styles.paymentInfoTitle}>Payment Information</Text>
+          <Text style={styles.paymentInfoText}>
+            • Select your preferred payment method above{'\n'}
+            • Review payment details before confirming{'\n'}
+            • Payment will be processed immediately{'\n'}
+            • You'll receive a confirmation SMS
+          </Text>
+        </View>
+      )}
     </View>
   );
 
@@ -231,13 +282,13 @@ export default function ContributeScreen() {
         
         <View style={styles.successDetails}>
           <Text style={styles.successDetail}>
-            Transaction ID: #{Math.random().toString(36).substr(2, 9).toUpperCase()}
-          </Text>
-          <Text style={styles.successDetail}>
             Method: {selectedMethod === 'momo' ? 'MTN MoMo' : 'Airtel Money'}
           </Text>
           <Text style={styles.successDetail}>
             Time: {new Date().toLocaleTimeString()}
+          </Text>
+          <Text style={styles.successDetail}>
+            Status: Completed
           </Text>
         </View>
       </View>
@@ -451,7 +502,61 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   payButton: {
+    backgroundColor: colors.beigeDeep,
+  },
+  payButtonActive: {
     backgroundColor: colors.forestGreen,
+  },
+  confirmationCard: {
+    backgroundColor: colors.white,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: colors.forestGreen,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  confirmationTitle: {
+    fontSize: 18,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.forestGreen,
+    marginBottom: 8,
+  },
+  confirmationAmount: {
+    fontSize: 32,
+    fontFamily: 'Fraunces_700Bold',
+    color: colors.forestGreen,
+    marginBottom: 4,
+  },
+  confirmationMethod: {
+    fontSize: 14,
+    fontFamily: 'DMSans_500Medium',
+    color: colors.textMid,
+    marginBottom: 2,
+  },
+  confirmationPhone: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+    marginBottom: 16,
+  },
+  confirmationDivider: {
+    width: '100%',
+    height: 1,
+    backgroundColor: colors.beigeDeep,
+    marginBottom: 16,
+  },
+  confirmationNote: {
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+    textAlign: 'center',
+    lineHeight: 18,
   },
   processingContent: {
     alignItems: 'center',
