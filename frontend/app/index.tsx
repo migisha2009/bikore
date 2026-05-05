@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, Animated } from 'react-native';
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
   const router = useRouter();
@@ -18,11 +19,26 @@ export default function Index() {
 
   useEffect(() => {
     if (!loading) {
-      const timer = setTimeout(() => {
-        if (user) {
-          router.replace('/(app)');
-        } else {
-          router.replace('/(auth)/login');
+      const timer = setTimeout(async () => {
+        try {
+          const onboarded = await AsyncStorage.getItem('onboarding_completed');
+          if (!onboarded) {
+            router.replace('/onboarding');
+            return;
+          }
+          if (user) {
+            router.replace('/(app)');
+          } else {
+            router.replace('/(auth)/login');
+          }
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          // Fallback to normal flow if there's an error
+          if (user) {
+            router.replace('/(app)');
+          } else {
+            router.replace('/(auth)/login');
+          }
         }
       }, 2000);
       return () => clearTimeout(timer);
