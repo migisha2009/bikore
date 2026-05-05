@@ -263,14 +263,32 @@ router.get('/:id/requests', authenticateToken, requireAdmin, async (req, res) =>
     `;
     const adminCheckResult = await db.query(adminCheckQuery, [id]);
     
+    if (adminCheckResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+    
+    if (adminCheckResult.rows[0].admin_id !== adminId) {
+      return res.status(403).json({ error: 'Only admin can view requests' });
+    }
+    
+    // Get pending requests
+    const query = `
+      SELECT mr.id, u.name, u.phone, mr.message,
+             mr.requested_at as requested_at,
+             mr.status as status
       FROM member_requests mr
       JOIN users u ON mr.user_id = u.id
       WHERE mr.group_id = $1 AND mr.status = 'pending'
       ORDER BY mr.requested_at DESC
     `;
     
-    const result = await db.query(query, [groupId]);
-    res.json(result.rows);
+    const result = await db.query(query, [id]);
+    
+    const requests = result.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      phone: row.phone,
+      message: row.message,
       requested_at: row.requested_at,
       status: row.status
     }));

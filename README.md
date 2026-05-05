@@ -1,95 +1,157 @@
-# 🌱 BIKORE - Digital Ikimina Platform
+# Bikore - Digital Ikimina Platform
 
-A full-stack mobile application for digital Ikimina (group savings circles) in Rwanda, built with React Native + Expo and Node.js + PostgreSQL.
+Bikore is a modern digital platform that brings traditional Rwandan Ikimina savings groups to the digital age. It enables communities to create, manage, and participate in savings circles with transparency, security, and convenience.
 
-## 📱 Features
+## 🌟 Features
 
-- **User Authentication**: Secure registration and login with JWT tokens
-- **Group Management**: Create and join Ikimina groups with invite codes
-- **Contribution Tracking**: Monitor contributions and payout cycles
-- **Mobile Money Integration**: Mock MTN MoMo and Airtel Money payment flows
-- **Real-time Updates**: Live status updates for contributions and group activities
-- **Beautiful UI**: Organic-luxury design with Rwandan cultural elements
+- **Digital Savings Groups**: Create and join Ikimina-style savings groups
+- **Automated Contributions**: Schedule and track regular contributions
+- **Secure Payments**: Mobile money integration with Rwanda's leading providers
+- **Trust Score System**: Build and maintain trust within the community
+- **Referral Program**: Earn rewards by inviting friends
+- **Real-time Analytics**: Track savings progress and group performance
+- **Multi-language Support**: English and Kinyarwanda
+- **Biometric Security**: Face ID and fingerprint authentication
 
-## 🛠 Tech Stack
+## 🏗️ Architecture
 
-### Frontend
-- **React Native** with Expo (SDK 51+)
-- **Expo Router** for file-based navigation
-- **TypeScript** for type safety
-- **Fraunces** + **DM Sans** fonts for premium typography
-- **Expo Secure Store** for token storage
+### Frontend (React Native)
+- **Framework**: Expo Router with React Native
+- **Styling**: StyleSheet with custom design system
+- **State Management**: React Context API
+- **Navigation**: Expo Router (file-based routing)
+- **Fonts**: Fraunces (headings) & DM Sans (body)
 
-### Backend
-- **Node.js** + Express.js
-- **PostgreSQL** with `pg` driver
-- **JWT** for authentication
-- **bcrypt** for password hashing
-- **CORS** for cross-origin requests
+### Backend (Node.js)
+- **Framework**: Express.js
+- **Database**: PostgreSQL
+- **Authentication**: JWT with bcrypt password hashing
+- **Rate Limiting**: Express-rate-limit
+- **SMS Integration**: Africa Talking API
+- **Validation**: Custom input sanitization and validation
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 16+
+
+- Node.js 16+ 
+- npm or yarn
 - PostgreSQL 12+
-- Expo CLI (`npm install -g @expo/cli`)
-- Mobile device or emulator (Expo Go app)
+- Expo CLI (for mobile development)
 
-### Database Setup
+### Installation
 
-1. **Create Database**
+1. **Clone the repository**
    ```bash
-   createdb bikore
+   git clone https://github.com/your-username/bikore.git
+   cd bikore
    ```
 
-2. **Run Schema**
+2. **Install dependencies**
    ```bash
-   cd backend
-   psql bikore < schema.sql
-   ```
-
-3. **Seed Demo Data** (optional)
-   ```bash
-   cd backend
-   node seed.js
-   ```
-
-### Backend Setup
-
-1. **Install Dependencies**
-   ```bash
-   cd backend
-   npm install
-   ```
-
-2. **Environment Variables**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
-   ```
-
-3. **Start Server**
-   ```bash
-   npm run dev
-   # Server runs on http://localhost:4000
-   ```
-
-### Frontend Setup
-
-1. **Install Dependencies**
-   ```bash
+   # Frontend
    cd frontend
    npm install
+   
+   # Backend
+   cd ../backend
+   npm install
    ```
 
-2. **Start Expo**
+3. **Set up environment variables**
+   
+   **Backend (.env)**
+   ```env
+   # Database
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_NAME=bikore
+   DB_USER=your_db_user
+   DB_PASSWORD=your_db_password
+   
+   # JWT
+   JWT_SECRET=your_super_secret_jwt_key_here
+   
+   # Africa Talking
+   AT_API_KEY=your_africatalking_api_key
+   AT_USERNAME=your_africatalking_username
+   AT_SENDER_ID=Bikore
+   
+   # Server
+   PORT=3000
+   NODE_ENV=development
+   ```
+   
+   **Frontend (app.config.js or .env)**
+   ```env
+   EXPO_PUBLIC_API_URL=http://localhost:3000/api
+   ```
+
+4. **Set up database**
    ```bash
-   npx expo start
-   # Scan QR code with Expo Go app
+   # Create database
+   createdb bikore
+   
+   # Run migrations (if available)
+   cd backend
+   npm run migrate
    ```
 
-## 📱 Demo Credentials
+5. **Start the development servers**
+   ```bash
+   # Backend (Terminal 1)
+   cd backend
+   npm run dev
+   
+   # Frontend (Terminal 2)
+   cd frontend
+   npm start
+   ```
 
+## 🧪 Testing
+
+### Backend Tests
+
+```bash
+cd backend
+
+# Run all tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- auth.test.js
+```
+
+### Test Coverage
+
+The test suite covers:
+- ✅ Authentication (register, login, JWT validation)
+- ✅ Groups (creation, validation, join logic)
+- ✅ Payments (phone validation, initiation, confirmation)
+- ✅ Input validation and rate limiting
+- ✅ Security (SQL injection, XSS prevention)
+
+### Demo Credentials
+
+For testing purposes, use these demo credentials:
+
+**Admin User**
+- Phone: `+250788123456`
+- Password: `Demo123!`
+
+**Regular User**
+- Phone: `+250723456789`
+- Password: `User123!`
+
+**Test Group**
+- Group Code: `DEMO2024`
+- Contribution Amount: Rwf 50,000
+- Cycle: Monthly
+
+**Additional Test Users**
 | Name | Phone | Password |
 |------|-------|----------|
 | Amina Uwimana | +250788100001 | password123 |

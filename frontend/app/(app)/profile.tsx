@@ -210,7 +210,6 @@ export default function ProfileScreen() {
           </View>
         </View>
       </View>
-      </View>
 
       {/* Referral Section */}
       {referralData && (
@@ -349,6 +348,7 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     color: colors.textMid,
   },
+  profileCard: { flex: 1, backgroundColor: colors.beige, borderRadius: 16, padding: 20, borderWidth: 1, borderColor: colors.beigeDeep },
   trustScoreContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -375,7 +375,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
-  statsRow: { flexDirection: 'row', paddingHorizontal: 24, gap: 12, marginBottom: 24 },
+  statInfo: { alignItems: 'center', marginLeft: 12 },
   statCard: { flex: 1, backgroundColor: colors.beige, borderRadius: 16, padding: 20, alignItems: 'center', borderWidth: 1, borderColor: colors.beigeDeep },
   statValue: { fontSize: 20, fontFamily: 'Fraunces_700Bold', color: colors.forestGreen, marginBottom: 4 },
   statLabel: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: colors.textMid },

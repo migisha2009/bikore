@@ -205,49 +205,58 @@ export default function GoalsScreen() {
           <Text style={styles.goalTarget}>{formatRwf(goal.target_amount)}</Text>
           <Text style={styles.goalCurrent}>{formatRwf(goal.current_amount)}</Text>
         </View>
-      </View>
 
-      <View style={styles.progressBarContainer}>
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+        <View style={styles.progressBarContainer}>
+          <View style={styles.progressBar}>
+            <View style={[styles.progressFill, { width: `${progressPercentage}%` }]} />
+          </View>
+          <Text style={styles.progressText}>{progressPercentage}%</Text>
         </View>
-        <Text style={styles.progressText}>{progressPercentage}%</Text>
-      </View>
 
-      <View style={styles.goalFooter}>
-        <Text style={styles.goalDate}>
-          Target: {formatDate(goal.target_date)}
-        </Text>
-        <Text style={[styles.goalStatus, { color: getStatusColor(goal.status) }]}>
-          {goal.status.charAt(0).toUpperCase() + goal.status.slice(1)}
-        </Text>
-      </View>
-
-      {!isCompleted && (
-        <View style={styles.goalActions}>
-          <TouchableOpacity
-            style={styles.updateButton}
-            onPress={() => handleUpdateProgress(goal.id)}
-          >
-            <MaterialCommunityIcons name="plus" size={16} color={colors.forestGreen} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.editButton}
-            onPress={() => setEditingGoal(goal)}
-          >
-            <MaterialCommunityIcons name="pencil" size={16} color={colors.textMid} />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => handleDeleteGoal(goal.id)}
-          >
-            <MaterialCommunityIcons name="trash-can" size={16} color={colors.error} />
-          </TouchableOpacity>
+        <View style={styles.goalFooter}>
+          <Text style={styles.goalDate}>
+            Target: {formatDate(goal.target_date)}
+          </Text>
+          <Text style={[styles.goalStatus, { color: getStatusColor(goal.status) }]}>
+            {goal.status.charAt(0).toUpperCase() + goal.status.slice(1)}
+          </Text>
         </View>
-      )}
-    </View>
+
+        {!isCompleted && (
+          <View style={styles.goalActions}>
+            <TouchableOpacity
+              style={styles.updateButton}
+              onPress={() => {
+                Alert.prompt(
+                  'Update Progress',
+                  'Enter amount to add:',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Add', onPress: (amount) => handleUpdateProgress(goal.id, amount || '') }
+                  ],
+                  'plain-text'
+                );
+              }}
+            >
+              <MaterialCommunityIcons name="plus" size={16} color={colors.forestGreen} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => setEditingGoal(goal)}
+            >
+              <MaterialCommunityIcons name="pencil" size={16} color={colors.textMid} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => handleDeleteGoal(goal.id)}
+            >
+              <MaterialCommunityIcons name="trash-can" size={16} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -300,7 +309,7 @@ export default function GoalsScreen() {
               <TextInput
                 style={styles.formInput}
                 value={formData.name}
-                onChangeText={setFormData}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="e.g., Emergency Fund"
                 maxLength={50}
               />
@@ -311,7 +320,7 @@ export default function GoalsScreen() {
               <TextInput
                 style={styles.formInput}
                 value={formData.target_amount}
-                onChangeText={setFormData}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, target_amount: text }))}
                 placeholder="100000"
                 keyboardType="numeric"
                 maxLength={10}
@@ -372,7 +381,7 @@ export default function GoalsScreen() {
               <TextInput
                 style={styles.formInput}
                 value={formData.name}
-                onChangeText={setFormData}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, name: text }))}
                 placeholder="e.g., Emergency Fund"
                 maxLength={50}
               />
@@ -383,7 +392,7 @@ export default function GoalsScreen() {
               <TextInput
                 style={styles.formInput}
                 value={formData.target_amount}
-                onChangeText={setFormData}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, target_amount: text }))}
                 placeholder="100000"
                 keyboardType="numeric"
                 maxLength={10}
