@@ -1243,5 +1243,5 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_700Bold',
     color: colors.white,
     marginRight: 12,
-  },
+  }
 });
