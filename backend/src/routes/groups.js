@@ -86,6 +86,9 @@ router.post('/', auth, async (req, res) => {
   if (!name || !contribution_amount || !total_cycles)
     return res.status(400).json({ error: 'Name, amount and total_cycles required' });
   
+  if (name.length < 3)
+    return res.status(400).json({ error: 'Group name must be at least 3 characters long' });
+  
   if (contribution_amount < 1000)
     return res.status(400).json({ error: 'Contribution amount must be at least 1000 Rwf' });
   

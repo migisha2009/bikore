@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   },
   chartTitle: {
     fontSize: 18,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 16,
   },
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   },
   historyAmount: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.forestGreen,
   },
   historyRight: {

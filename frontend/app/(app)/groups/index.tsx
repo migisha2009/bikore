@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../../context/AuthContext';
@@ -52,8 +52,9 @@ export default function GroupsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
-        <Text style={{ color: colors.forestGreen, fontSize: 16 }}>Loading...</Text>
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#2C4A2E" />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
@@ -145,6 +146,17 @@ export default function GroupsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    textAlign: 'center',
+    marginTop: 16,
+    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+  },
   header: { 
     padding: 24, 
     paddingTop: 60, 

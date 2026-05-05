@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Alert, Linking, Share
+  TouchableOpacity, Alert, Linking, Share, ActivityIndicator
 } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -160,6 +160,15 @@ export default function ProfileScreen() {
 
   const userInitials = user?.name ? initials(user.name) : 'BK';
 
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color="#2C4A2E" />
+        <Text style={styles.loadingText}>Loading profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
@@ -176,30 +185,31 @@ export default function ProfileScreen() {
       </View>
 
       {/* Stats */}
-            </View>
-
-            <View style={styles.profileCard}>
-              <Text style={styles.cardTitle}>Trust Score</Text>
-              
-              <View style={styles.trustScoreContainer}>
-                <View style={styles.trustScoreBadge}>
-                  <Text style={styles.trustScoreText}>{trustScore}</Text>
-                </View>
-                <Text style={styles.trustScoreLabel}>
-                  {trustScore >= 90 ? '🟢 Excellent' : 
-                   trustScore >= 70 ? '� Good' : 
-                   trustScore >= 50 ? '🟠 Fair' : 
-            </View>
-          </View>
+      <View style={styles.statsRow}>
+        <View style={styles.profileCard}>
+          <Text style={styles.cardTitle}>Trust Score</Text>
           
-          <View style={styles.statCard}>
-            <MaterialCommunityIcons name="account-group" size={24} color={colors.forestGreen} />
-            <View style={styles.statInfo}>
-              <Text style={styles.statValue}>{stats?.activeGroups || 0}</Text>
-              <Text style={styles.statLabel}>Active Groups</Text>
+          <View style={styles.trustScoreContainer}>
+            <View style={styles.trustScoreBadge}>
+              <Text style={styles.trustScoreText}>{trustScore}</Text>
             </View>
+            <Text style={styles.trustScoreLabel}>
+              {trustScore >= 90 ? '🟢 Excellent' : 
+               trustScore >= 70 ? '🟡 Good' : 
+               trustScore >= 50 ? '🟠 Fair' : 
+               '🔴 Poor'}
+            </Text>
           </View>
         </View>
+        
+        <View style={styles.statCard}>
+          <MaterialCommunityIcons name="account-group" size={24} color={colors.forestGreen} />
+          <View style={styles.statInfo}>
+            <Text style={styles.statValue}>{stats?.activeGroups || 0}</Text>
+            <Text style={styles.statLabel}>Active Groups</Text>
+          </View>
+        </View>
+      </View>
       </View>
 
       {/* Referral Section */}
@@ -307,16 +317,23 @@ export default function ProfileScreen() {
         </View>
       </View>
     </ScrollView>
-
-    <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-      <Text style={styles.logoutText}>Logout</Text>
-    </TouchableOpacity>
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.cream },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    textAlign: 'center',
+    marginTop: 16,
+    fontSize: 16,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+  },
+  statsRow: { flexDirection: 'row', paddingHorizontal: 24, gap: 12, marginBottom: 24 },
   header: { alignItems: 'center', padding: 24, paddingTop: 60, marginBottom: 8 },
   avatar: { width: 88, height: 88, borderRadius: 44, alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   avatarText: { fontSize: 32, fontFamily: 'Fraunces_700Bold', color: '#F5F0E8' },
@@ -415,7 +432,7 @@ const styles = StyleSheet.create({
   },
   referralTitle: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.textDark,
     marginBottom: 4,
   },
@@ -464,7 +481,7 @@ const styles = StyleSheet.create({
   },
   inviteButtonText: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.white,
     marginLeft: 8,
   },

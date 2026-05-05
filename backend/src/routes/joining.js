@@ -91,6 +91,13 @@ router.post('/request-join', authenticateToken, async (req, res) => {
       });
     }
     
+    // Validate message (reason) - minimum 20 characters
+    if (message && message.length < 20) {
+      return res.status(400).json({ 
+        error: 'Reason must be at least 20 characters long' 
+      });
+    }
+    
     // Validate invite code format
     if (!inviteCode || inviteCode.length !== 8) {
       return res.status(400).json({ 

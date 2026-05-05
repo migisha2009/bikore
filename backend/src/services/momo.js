@@ -6,7 +6,7 @@ async function initiateMoMoPayment({ phone, amount, reference }) {
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   // Validate phone number (Rwanda format)
-  if (!phone.match(/^(\+250|07)[0-9]{8}$/)) {
+  if (!phone.match(/^(\+2507|07)[3-9][0-9]{6}$/)) {
     throw new Error('Invalid phone number format');
   }
   
@@ -24,7 +24,7 @@ async function initiateAirtelPayment({ phone, amount, reference }) {
   await new Promise(resolve => setTimeout(resolve, 1000));
   
   // Validate phone number (Rwanda format)
-  if (!phone.match(/^(\+250|07)[0-9]{8}$/)) {
+  if (!phone.match(/^(\+2507|07)[3-9][0-9]{6}$/)) {
     throw new Error('Invalid phone number format');
   }
   
@@ -66,8 +66,9 @@ function validatePhoneNumber(phone) {
   // Remove any spaces or dashes
   const cleanPhone = phone.replace(/[\s-]/g, '');
   
-  // Check Rwanda phone formats: +250788123456 or 0788123456
-  const rwandaPhoneRegex = /^(\+250|07)[0-9]{8}$/;
+  // Check Rwanda phone formats: +2507[3-9]xxxxxxx or 07[3-9]xxxxxxx
+  // Rwanda mobile numbers start with 073, 075, 076, 077, 078, 079
+  const rwandaPhoneRegex = /^(\+2507|07)[3-9][0-9]{6}$/;
   
   return rwandaPhoneRegex.test(cleanPhone) ? cleanPhone : null;
 }

@@ -4,9 +4,7 @@ import {
   TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native';
 import { router } from 'expo-router';
-import axios from 'axios';
-
-const API_BASE = 'http://localhost:4000/api/auth';
+import api from '../../utils/api';
 
 export default function ForgotPasswordScreen() {
   const [step, setStep] = useState(1);
@@ -39,7 +37,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      await axios.post(`${API_BASE}/forgot-password`, { phone });
+      await api.post('/auth/forgot-password', { phone });
       setStep(2);
       setResendCountdown(60);
     } catch (error: any) {
@@ -58,7 +56,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      const response = await axios.post(`${API_BASE}/verify-otp`, { phone, otp: otpString });
+      const response = await api.post('/auth/verify-otp', { phone, otp: otpString });
       setResetToken(response.data.resetToken);
       setStep(3);
     } catch (error: any) {
@@ -73,7 +71,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      await axios.post(`${API_BASE}/forgot-password`, { phone });
+      await api.post('/auth/forgot-password', { phone });
       setResendCountdown(60);
       Alert.alert('Success', 'OTP resent successfully');
     } catch (error: any) {
@@ -101,7 +99,7 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      await axios.post(`${API_BASE}/reset-password`, {
+      await api.post('/auth/reset-password', {
         resetToken,
         newPassword
       });

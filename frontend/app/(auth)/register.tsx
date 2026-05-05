@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   },
   link: {
     fontSize: 16,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
     color: colors.mustard,
   },
   privacyNote: {

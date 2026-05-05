@@ -39,6 +39,6 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: colors.white,
-    fontFamily: 'DMSans_600SemiBold',
+    fontFamily: 'DMSans_700Bold',
   },
 });
