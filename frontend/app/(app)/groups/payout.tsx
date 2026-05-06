@@ -333,6 +333,7 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginRight: 16,
+    marginTop: 16,
   },
   backText: {
     fontSize: 16,
@@ -603,8 +604,5 @@ const styles = StyleSheet.create({
     color: colors.textMid,
     textAlign: 'center',
     marginBottom: 24,
-  },
-  backButton: {
-    marginTop: 16,
   },
 });

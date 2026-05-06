@@ -523,4 +523,6 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_500Medium',
     color: colors.textDark,
   },
+  cardTitle: { fontSize: 16, fontFamily: 'DMSans_700Bold', color: '#2C4A2E', marginBottom: 8 },
+  settingSub: { fontSize: 12, fontFamily: 'DMSans_400Regular', color: '#8A9B8C' },
 });

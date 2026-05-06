@@ -1002,10 +1002,42 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   memberPhone: {
-  adminBadgeText: {
+    fontSize: 14,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+    marginBottom: 2,
+  },
+  memberPosition: {
+    fontSize: 12,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+    marginBottom: 4,
+  },
+  trustScoreBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.beige,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  trustScoreText: {
+    fontSize: 12,
+    fontFamily: 'DMSans_700Bold',
+    color: colors.forestGreen,
+    marginRight: 4,
+  },
+  trustScoreLabel: {
+    fontSize: 10,
+    fontFamily: 'DMSans_400Regular',
+    color: colors.textMid,
+  },
+  memberStatus: {
     fontSize: 12,
     fontFamily: 'DMSans_500Medium',
-    color: colors.white,
+    color: colors.textMid,
+    marginTop: 4,
   },
   adminActions: {
     padding: 24,

@@ -198,6 +198,8 @@ export default function AnalyticsScreen() {
               }}
               width={screenWidth}
               height={220}
+              yAxisLabel=""
+              yAxisSuffix=""
               chartConfig={barChartConfig}
               style={styles.chart}
             />
@@ -222,6 +224,7 @@ export default function AnalyticsScreen() {
               }))}
               width={screenWidth}
               height={220}
+              paddingLeft="15"
               chartConfig={pieChartConfig}
               accessor="value"
               backgroundColor="transparent"

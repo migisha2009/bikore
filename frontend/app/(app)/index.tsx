@@ -224,4 +224,11 @@ const styles = StyleSheet.create({
   goalsSection: {
     marginBottom: 32,
   },
+  content: { flex: 1 },
+  summarySection: { paddingHorizontal: 24, marginBottom: 24 },
+  smallCard: { flex: 1 },
+  seeAllButton: { padding: 4 },
+  seeAllText: { fontSize: 14, fontFamily: 'DMSans_500Medium', color: '#C9922A' },
+  createGoalButton: { backgroundColor: '#2C4A2E', borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
+  createGoalText: { color: '#F5F0E8', fontFamily: 'DMSans_700Bold', fontSize: 13, fontWeight: 'bold' as const },
 });

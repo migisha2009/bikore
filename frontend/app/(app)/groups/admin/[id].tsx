@@ -9,6 +9,9 @@ import { formatRwf, initials } from '../../../../utils/format';
 import api from '../../../../utils/api';
 
 interface Overview {
+  groupName: string;
+  description: string;
+  rules: string;
   totalMembers: number;
   activeMembers: number;
   paidMembers: number;
@@ -56,7 +59,7 @@ export default function AdminDashboardScreen() {
   const [members, setMembers] = useState<Member[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'cycle' | 'payout' | 'members' | 'settings' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'cycle' | 'members' | 'history' | 'payout' | 'settings' | 'chat' | 'timeline' | 'admin' | 'penalty'>('overview');
   const [reminding, setReminding] = useState(false);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [editingSettings, setEditingSettings] = useState(false);
@@ -315,7 +318,7 @@ export default function AdminDashboardScreen() {
   );
 
   const renderMemberManagement = () => {
-    if (!group) return null;
+    if (!overview) return null;
 
     return (
       <View style={styles.section}>
@@ -1071,4 +1074,21 @@ const styles = StyleSheet.create({
     fontFamily: 'DMSans_400Regular',
     color: colors.textMid,
   },
+  // Penalty section styles
+  penaltySection: { marginBottom: 16 },
+  penaltySubtitle: { fontSize: 13, fontFamily: 'DMSans_400Regular', color: '#4A5C4C', marginBottom: 12 },
+  memberList: { marginBottom: 16 },
+  selectedMember: { borderColor: '#2C4A2E', borderWidth: 2 },
+  waiveButton: { backgroundColor: '#C9922A', borderRadius: 8, padding: 10, alignItems: 'center' as const },
+  waiverModal: { backgroundColor: '#F5F0E8', borderRadius: 16, padding: 20, margin: 24 },
+  waiverHeader: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const, marginBottom: 16 },
+  waiverTitle: { fontSize: 18, fontFamily: 'Fraunces_700Bold', color: '#2C4A2E' },
+  waiverContent: { marginBottom: 16 },
+  waiverSubtitle: { fontSize: 14, fontFamily: 'DMSans_400Regular', color: '#4A5C4C', marginBottom: 12 },
+  waiverForm: { marginBottom: 16 },
+  formLabel: { fontSize: 13, fontFamily: 'DMSans_500Medium', color: '#2C4A2E', marginBottom: 8 },
+  reasonInput: { backgroundColor: '#EDE8DC', borderRadius: 8, padding: 12, fontSize: 14, fontFamily: 'DMSans_400Regular', color: '#1C2B1E', minHeight: 80, textAlignVertical: 'top' as const },
+  waiverActions: { flexDirection: 'row' as const, gap: 12 },
+  cancelWaiverButton: { flex: 1, backgroundColor: '#EDE8DC', borderRadius: 8, padding: 12, alignItems: 'center' as const },
+  confirmWaiverButton: { flex: 1, backgroundColor: '#C9922A', borderRadius: 8, padding: 12, alignItems: 'center' as const },
 });

@@ -1,7 +1,8 @@
 import { useAuth } from '../../context/AuthContext';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
+import api from '../../utils/api';
 
 function TabIcon({ emoji, label, focused, badge }: { emoji: string; label: string; focused: boolean; badge?: number }) {
   return (

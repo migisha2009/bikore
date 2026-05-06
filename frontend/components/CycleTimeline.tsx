@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { colors } from '../../utils/colors';
-import { formatRwf, initials } from '../../utils/format';
+// CORRECT:
+import { colors } from '../utils/colors';
+import { formatRwf, initials } from '../utils/format';
 
 interface Cycle {
   id: string;
